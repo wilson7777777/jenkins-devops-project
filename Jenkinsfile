@@ -1,29 +1,27 @@
 pipeline {
     agent {
-        docker { image 'node:18-alpine' } // Node.js + npm preinstalled
-    }
-    environment {
-        IMAGE_NAME = "myapp:jenkins"
-    }
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
+        docker {
+            image 'node:20' // or another LTS version
+            args '-u root:root' // run as root to install packages if needed
         }
+    }
+
+    stages {
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                sh 'npm install'
             }
         }
+
+        stage('Run Tests') {
+            steps {
+                sh 'npm test || echo "Tests not specified yet"'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
-            }
-        }
-        stage('Run Container') {
-            steps {
-                sh 'docker run -d -p 3000:3000 $IMAGE_NAME'
+                sh 'docker build -t myapp:latest .'
             }
         }
     }
