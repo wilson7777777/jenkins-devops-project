@@ -1,8 +1,11 @@
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-ENV PORT=3000
-EXPOSE 3000
-CMD ["node", "server.js"]
+FROM jenkins/jenkins:lts
+
+USER root
+
+# Install Docker CLI
+RUN apt-get update && \
+    apt-get install -y curl gnupg lsb-release docker.io && \
+    usermod -aG docker jenkins
+
+USER jenkins
+
