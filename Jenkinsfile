@@ -2,33 +2,33 @@ pipeline {
     agent any
 
     stages {
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm install'
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                sh 'npm test || echo "Tests not specified yet"'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t your-dockerhub-username/jenkins-devops-project:latest .'
+                script {
+                    docker.build("myapp:latest")
+                }
             }
         }
 
-        // Optional: Push to Docker Hub
+        stage('Run Tests in Docker') {
+            steps {
+                script {
+                    docker.image("myapp:latest").inside {
+                        sh 'npm test'
+                    }
+                }
+            }
+        }
+
+        // Optional: push image to Docker Hub
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
-                    sh 'docker push your-dockerhub-username/jenkins-devops-project:latest'
+                withDockerRegistry([credentialsId: 'dockerhub-creds', url: '']) {
+                    script {
+                        docker.image("myapp:latest").push()
+                    }
                 }
             }
         }
     }
 }
-
